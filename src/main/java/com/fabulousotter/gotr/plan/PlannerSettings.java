@@ -57,6 +57,8 @@ public class PlannerSettings
 	@Builder.Default
 	Set<Altar> dispreferredAltars = ImmutableSet.of();
 	@Builder.Default
+	int pouchRepairLoads = 2;
+	@Builder.Default
 	boolean protectRightBarrier = true;
 	@Builder.Default
 	BarrierPriority barrierPriority = BarrierPriority.LOWEST_HEALTH;

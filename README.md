@@ -17,6 +17,8 @@ GOTR Autopilot aims to make Guardians of the Rift as brain-off as possible, for 
   or the spell itself once the book is open.
 - While the plan says to drop an essence, makes **Drop** its left-click option.
 - **Always prefer** / **always avoid** altar lists, so e.g. Death and Blood are taken over Mind and Body.
+- Warns during downtime when a pouch is about to degrade, prompting an early Dark Mage repair, and
+  outlines the "Can you repair my pouches?" dialogue option. The count resets when the Dark Mage confirms.
 
 ## Strategies
 

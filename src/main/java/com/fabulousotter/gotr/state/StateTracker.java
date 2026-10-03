@@ -273,6 +273,11 @@ public class StateTracker
 	private final Set<Altar> talismans = new HashSet<>();
 	private final Map<Integer, Integer> runeStacks = new HashMap<>();
 	private final Map<PouchType, Boolean> pouchesPresent = new EnumMap<>(PouchType.class);
+	// Essence added to each pouch since it was last repaired, and the last seen stored/degraded
+	// state, so a repair can zero the count.
+	private final Map<PouchType, Integer> pouchUsed = new EnumMap<>(PouchType.class);
+	private final Map<PouchType, Integer> lastPouchStored = new EnumMap<>(PouchType.class);
+	private final Map<PouchType, Boolean> lastPouchDegraded = new EnumMap<>(PouchType.class);
 	private boolean bindingNecklaceWorn;
 	private boolean runePouch;
 
@@ -309,6 +314,9 @@ public class StateTracker
 		closingTick = -1;
 		gameEndTick = -1;
 		loadBreak();
+		pouchUsed.clear();
+		lastPouchStored.clear();
+		lastPouchDegraded.clear();
 		lastPortalSpawnTick = -1;
 		anyPortalThisGame = false;
 		portalOpen = false;
@@ -1231,6 +1239,35 @@ public class StateTracker
 			pouches.add(new PouchState(type, client.getVarbitValue(type.getVarbitId()), type.capacity(rc, degraded), degraded));
 		}
 
+		// Track essence fed to each pouch since it was last repaired, so the next-game degrade can
+		// be predicted. A repair is the Dark Mage's dialogue line, or a degraded pouch turning
+		// intact; the cast animation is deliberately not used, as the contact can fail.
+		boolean pouchRepaired = darkMageRepairResponse();
+		int pouchUsesLeft = -1;
+		int pouchWorstCapacity = 0;
+		for (PouchState pouch : pouches)
+		{
+			PouchType type = pouch.getType();
+			boolean wasDegraded = lastPouchDegraded.getOrDefault(type, pouch.isDegraded());
+			int previousStored = lastPouchStored.getOrDefault(type, pouch.getStored());
+			boolean justRepaired = pouchRepaired || (wasDegraded && !pouch.isDegraded());
+			int used = justRepaired ? 0
+				: Math.max(0, pouchUsed.getOrDefault(type, 0) + Math.max(0, pouch.getStored() - previousStored));
+			pouchUsed.put(type, used);
+			lastPouchStored.put(type, pouch.getStored());
+			lastPouchDegraded.put(type, pouch.isDegraded());
+			int limit = type.getDegradeEssence();
+			if (limit > 0 && !pouch.isDegraded())
+			{
+				int left = limit - used;
+				if (pouchUsesLeft < 0 || left < pouchUsesLeft)
+				{
+					pouchUsesLeft = left;
+					pouchWorstCapacity = pouch.getCapacity();
+				}
+			}
+		}
+
 		List<BarrierState> barriers = new ArrayList<>();
 		for (NPC npc : barrierNpcs.values())
 		{
@@ -1333,6 +1370,8 @@ public class StateTracker
 			.baseRune(baseRune)
 			.baseRuneCount(baseCount)
 			.pouches(pouches)
+			.pouchUsesLeft(pouchUsesLeft)
+			.pouchWorstCapacity(pouchWorstCapacity)
 			.bindingNecklaceWorn(bindingNecklaceWorn)
 			.necklaceCharges(client.getVarpValue(VarPlayerID.NECKLACE_OF_BINDING))
 			.magicImbueActive(client.getVarbitValue(VarbitID.MAGIC_IMBUE_ACTIVE) > 0)
@@ -1356,6 +1395,13 @@ public class StateTracker
 			.hugePerTick(rates.hugePerTick())
 			.secondsToClose(phase == GamePhase.ACTIVE ? rates.secondsToClose(hudPower, hudMaxPower) : -1)
 			.build();
+	}
+
+	// The Dark Mage's line confirming a pouch repair in the NPC Contact dialogue.
+	private boolean darkMageRepairResponse()
+	{
+		Widget text = client.getWidget(InterfaceID.ChatLeft.TEXT);
+		return text != null && text.getText() != null && text.getText().contains("transfiguration spell");
 	}
 
 	@Nullable

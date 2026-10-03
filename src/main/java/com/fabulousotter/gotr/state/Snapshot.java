@@ -108,6 +108,12 @@ public class Snapshot
 	int baseRuneCount;
 	@Builder.Default
 	List<PouchState> pouches = ImmutableList.of();
+	// Essence left before the closest-to-degrading pouch fails, and that pouch's capacity; -1 when
+	// no degradable pouch is held.
+	@Builder.Default
+	int pouchUsesLeft = -1;
+	@Builder.Default
+	int pouchWorstCapacity = 0;
 
 	boolean bindingNecklaceWorn;
 	int necklaceCharges;

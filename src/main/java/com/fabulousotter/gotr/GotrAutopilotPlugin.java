@@ -30,6 +30,7 @@ import com.fabulousotter.gotr.overlay.InstructionOverlay;
 import com.fabulousotter.gotr.overlay.ItemHighlightOverlay;
 import com.fabulousotter.gotr.overlay.MagicImbueOverlay;
 import com.fabulousotter.gotr.overlay.Pathfinder;
+import com.fabulousotter.gotr.overlay.PouchRepairOverlay;
 import com.fabulousotter.gotr.overlay.SceneOverlay;
 import com.fabulousotter.gotr.plan.AltarChooser;
 import com.fabulousotter.gotr.plan.Instruction;
@@ -172,6 +173,9 @@ public class GotrAutopilotPlugin extends Plugin
 	@Inject
 	private MagicImbueOverlay magicImbueOverlay;
 
+	@Inject
+	private PouchRepairOverlay pouchRepairOverlay;
+
 	private final Planner planner = new Planner();
 
 	@Getter
@@ -210,6 +214,7 @@ public class GotrAutopilotPlugin extends Plugin
 		overlayManager.add(sceneOverlay);
 		overlayManager.add(itemHighlightOverlay);
 		overlayManager.add(magicImbueOverlay);
+		overlayManager.add(pouchRepairOverlay);
 		eventBus.register(tracker);
 		renderCallbackManager.register(drawListener);
 		clientThread.invokeLater(tracker::primeFromClient);
@@ -225,6 +230,7 @@ public class GotrAutopilotPlugin extends Plugin
 		overlayManager.remove(sceneOverlay);
 		overlayManager.remove(itemHighlightOverlay);
 		overlayManager.remove(magicImbueOverlay);
+		overlayManager.remove(pouchRepairOverlay);
 		tracker.reset();
 		clearInstruction();
 		pathfinder = null;

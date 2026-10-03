@@ -140,12 +140,14 @@ public class Planner
 				.detail(keepBaseRune(s))
 				.target(Target.DEPOSIT_POOL).build();
 		}
-		if (s.anyPouchDegraded())
+		if (s.anyPouchDegraded() || pouchWillDegrade(s, c))
 		{
+			boolean degraded = s.anyPouchDegraded();
 			String how = s.isLunarSpellbook() && s.isRunePouch()
 				? "Cast NPC Contact: Dark Mage (Astral Contact)"
 				: "Right-click Apprentice Cordelia and choose Repair";
-			return Instruction.builder().step(Step.PRE_REPAIR_POUCHES).headline("Repair your pouches")
+			return Instruction.builder().step(Step.PRE_REPAIR_POUCHES)
+				.headline(degraded ? "Repair your pouches" : "Repair your pouches before the next game")
 				.detail(how).target(Target.APPRENTICE_CORDELIA).items(degradedPouches(s)).build();
 		}
 		if (s.getUnchargedCells() < 10)
@@ -174,6 +176,16 @@ public class Planner
 		return Instruction.builder().step(Step.PRE_POSITION)
 			.headline(positioning ? "Get ready to mine" : "Wait by the " + (remains == Target.LARGE_REMAINS ? "large remains" : "remains"))
 			.detail(when).target(remains).urgency(Urgency.INFO).build();
+	}
+
+	// Whether a pouch is close enough to degrading that the next game would tip it.
+	private static boolean pouchWillDegrade(Snapshot s, PlannerSettings c)
+	{
+		if (c.getPouchRepairLoads() <= 0 || s.getPouchUsesLeft() < 0)
+		{
+			return false;
+		}
+		return s.getPouchUsesLeft() <= (long) c.getPouchRepairLoads() * s.getPouchWorstCapacity();
 	}
 
 	@Nullable

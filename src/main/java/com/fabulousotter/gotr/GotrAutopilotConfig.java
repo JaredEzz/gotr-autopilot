@@ -226,6 +226,23 @@ public interface GotrAutopilotConfig extends Config
 		return EnumSet.noneOf(Altar.class);
 	}
 
+	@Range(
+		min = 0,
+		max = 5
+	)
+	@ConfigItem(
+		keyName = "pouchRepairLoads",
+		name = "Pouch repair warning (loads)",
+		description = "During downtime, prompt to repair your pouches when this many more loads would degrade "
+			+ "them, so the Dark Mage is contacted early. 0 turns the warning off",
+		section = strategySection,
+		position = 12
+	)
+	default int pouchRepairLoads()
+	{
+		return 2;
+	}
+
 	@ConfigItem(
 		keyName = "notification",
 		name = "Notify on new step",

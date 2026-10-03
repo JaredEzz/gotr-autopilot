@@ -34,11 +34,11 @@ import net.runelite.api.gameval.VarbitID;
 @Getter
 public enum PouchType
 {
-	SMALL("Small pouch", VarbitID.SMALL_ESSENCE_POUCH, ItemID.RCU_POUCH_SMALL, -1, 1, 3, 3),
-	MEDIUM("Medium pouch", VarbitID.MEDIUM_ESSENCE_POUCH, ItemID.RCU_POUCH_MEDIUM, ItemID.RCU_POUCH_MEDIUM_DEGRADE, 25, 6, 3),
-	LARGE("Large pouch", VarbitID.LARGE_ESSENCE_POUCH, ItemID.RCU_POUCH_LARGE, ItemID.RCU_POUCH_LARGE_DEGRADE, 50, 9, 7),
-	GIANT("Giant pouch", VarbitID.GIANT_ESSENCE_POUCH, ItemID.RCU_POUCH_GIANT, ItemID.RCU_POUCH_GIANT_DEGRADE, 75, 12, 9),
-	COLOSSAL("Colossal pouch", VarbitID.COLOSSAL_ESSENCE_POUCH, ItemID.RCU_POUCH_COLOSSAL, ItemID.RCU_POUCH_COLOSSAL_DEGRADE, 25, 40, 35);
+	SMALL("Small pouch", VarbitID.SMALL_ESSENCE_POUCH, ItemID.RCU_POUCH_SMALL, -1, 1, 3, 3, 0),
+	MEDIUM("Medium pouch", VarbitID.MEDIUM_ESSENCE_POUCH, ItemID.RCU_POUCH_MEDIUM, ItemID.RCU_POUCH_MEDIUM_DEGRADE, 25, 6, 3, 44 * 6),
+	LARGE("Large pouch", VarbitID.LARGE_ESSENCE_POUCH, ItemID.RCU_POUCH_LARGE, ItemID.RCU_POUCH_LARGE_DEGRADE, 50, 9, 7, 31 * 9),
+	GIANT("Giant pouch", VarbitID.GIANT_ESSENCE_POUCH, ItemID.RCU_POUCH_GIANT, ItemID.RCU_POUCH_GIANT_DEGRADE, 75, 12, 9, 10 * 12),
+	COLOSSAL("Colossal pouch", VarbitID.COLOSSAL_ESSENCE_POUCH, ItemID.RCU_POUCH_COLOSSAL, ItemID.RCU_POUCH_COLOSSAL_DEGRADE, 25, 40, 35, 8 * 40);
 
 	private final String label;
 	private final int varbitId;
@@ -47,6 +47,8 @@ public enum PouchType
 	private final int levelRequired;
 	private final int maxCapacity;
 	private final int degradedCapacity;
+	// Essence the pouch can take before it degrades; 0 for the small pouch, which never degrades.
+	private final int degradeEssence;
 
 	public int capacity(int runecraftLevel, boolean degraded)
 	{
