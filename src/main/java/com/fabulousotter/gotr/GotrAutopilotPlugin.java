@@ -66,7 +66,9 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.api.GameObject;
+import net.runelite.api.ItemContainer;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.GroundObject;
 import net.runelite.api.NPC;
@@ -380,14 +382,28 @@ public class GotrAutopilotPlugin extends Plugin
 		for (int i = 0; i < entries.length - 1; i++)
 		{
 			MenuEntry entry = entries[i];
-			if ("Drop".equals(entry.getOption()) && items.contains(entry.getItemId()))
+			if (!"Drop".equals(entry.getOption()) || !isEssenceEntry(entry, items))
 			{
-				System.arraycopy(entries, i + 1, entries, i, entries.length - i - 1);
-				entries[entries.length - 1] = entry;
-				client.setMenuEntries(entries);
-				return;
+				continue;
 			}
+			System.arraycopy(entries, i + 1, entries, i, entries.length - i - 1);
+			entries[entries.length - 1] = entry;
+			client.setMenuEntries(entries);
+			return;
 		}
+	}
+
+	// An inventory item op does not always carry its item id, so fall back to the clicked slot's item.
+	private boolean isEssenceEntry(MenuEntry entry, Set<Integer> items)
+	{
+		if (items.contains(entry.getItemId()))
+		{
+			return true;
+		}
+		ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		return inventory != null && entry.getParam0() >= 0
+			&& entry.getParam0() < inventory.getItems().length
+			&& items.contains(inventory.getItems()[entry.getParam0()].getId());
 	}
 
 	// NPC and object bounds are in scene coordinates.

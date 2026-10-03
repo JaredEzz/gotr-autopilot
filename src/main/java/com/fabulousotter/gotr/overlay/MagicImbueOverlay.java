@@ -26,6 +26,7 @@ package com.fabulousotter.gotr.overlay;
 
 import com.fabulousotter.gotr.GotrAutopilotConfig;
 import com.fabulousotter.gotr.GotrAutopilotPlugin;
+import com.fabulousotter.gotr.plan.Step;
 import com.fabulousotter.gotr.state.Location;
 import com.fabulousotter.gotr.state.Snapshot;
 import java.awt.BasicStroke;
@@ -33,6 +34,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.InterfaceID;
@@ -42,8 +44,10 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 
 /**
- * Points at Magic Imbue while a combination rune is about to be crafted without the buff: the
- * magic book tab when the book is closed, or the spell itself once the book is open.
+ * Points at the spell a step needs: NPC Contact while a pouch repair is due, or Magic Imbue while a
+ * combination rune is about to be crafted. Outlines the spell when the magic book is open, or its
+ * side tab when it is not. Once imbued, it points back at the inventory tab, where the base runes
+ * are used on the altar.
  */
 public class MagicImbueOverlay extends Overlay
 {
@@ -66,43 +70,70 @@ public class MagicImbueOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!config.magicImbuePrompt())
-		{
-			return null;
-		}
 		Snapshot s = plugin.getSnapshot();
-		if (s.getLocation() != Location.ALTAR_ROOM || !s.isLunarSpellbook() || s.isMagicImbueActive()
-			|| s.essenceTotal() <= 0 || !plugin.comboAvailableAt(s.getAltarRoom()))
+		Step step = plugin.getInstruction().getStep();
+
+		if (config.pouchRepairLoads() > 0 && step == Step.PRE_REPAIR_POUCHES
+			&& s.isLunarSpellbook() && s.isRunePouch())
+		{
+			highlightSpell(graphics, InterfaceID.MagicSpellbook.NPC_CONTACT);
+			return null;
+		}
+
+		if (!config.magicImbuePrompt() || s.getLocation() != Location.ALTAR_ROOM
+			|| !s.isLunarSpellbook() || step != Step.CRAFT_RUNES || s.essenceTotal() <= 0
+			|| !plugin.comboAvailableAt(s.getAltarRoom()))
 		{
 			return null;
 		}
-		Widget spell = client.getWidget(InterfaceID.MagicSpellbook.MAGIC_IMBUE);
-		if (spell != null && !spell.isHidden())
+		if (!s.isMagicImbueActive())
 		{
-			outline(graphics, spell.getBounds());
+			highlightSpell(graphics, InterfaceID.MagicSpellbook.MAGIC_IMBUE);
 			return null;
 		}
-		// The book is closed: point at its side tab so it can be opened.
-		Widget tab = tabWidget();
-		if (tab != null && !tab.isHidden())
+		// Imbued: the base runes are in the inventory, so point back at it while the book is open.
+		Widget book = client.getWidget(InterfaceID.MagicSpellbook.MAGIC_IMBUE);
+		if (book != null && !book.isHidden())
 		{
-			outline(graphics, tab.getBounds());
+			highlightTab(graphics, tab(InterfaceID.ToplevelPreEoc.STONE3, InterfaceID.ToplevelOsrsStretch.STONE3, InterfaceID.Toplevel.STONE3));
 		}
 		return null;
 	}
 
-	private Widget tabWidget()
+	// Outline a spell once the magic book is open, otherwise point at the magic tab.
+	private void highlightSpell(Graphics2D graphics, int spell)
+	{
+		Widget widget = client.getWidget(spell);
+		if (widget != null && !widget.isHidden())
+		{
+			outline(graphics, widget.getBounds());
+			return;
+		}
+		highlightTab(graphics, tab(InterfaceID.ToplevelPreEoc.STONE6, InterfaceID.ToplevelOsrsStretch.STONE6, InterfaceID.Toplevel.STONE6));
+	}
+
+	private void highlightTab(Graphics2D graphics, @Nullable Widget tab)
+	{
+		if (tab != null && !tab.isHidden())
+		{
+			outline(graphics, tab.getBounds());
+		}
+	}
+
+	// A side tab across the three layouts: modern resizable, classic resizable, then fixed.
+	@Nullable
+	private Widget tab(int modern, int stretch, int fixed)
 	{
 		if (!client.isResized())
 		{
-			return client.getWidget(InterfaceID.Toplevel.STONE6);
+			return client.getWidget(fixed);
 		}
-		Widget modern = client.getWidget(InterfaceID.ToplevelPreEoc.STONE6);
-		if (modern != null && !modern.isHidden())
+		Widget widget = client.getWidget(modern);
+		if (widget != null && !widget.isHidden())
 		{
-			return modern;
+			return widget;
 		}
-		return client.getWidget(InterfaceID.ToplevelOsrsStretch.STONE6);
+		return client.getWidget(stretch);
 	}
 
 	private void outline(Graphics2D graphics, Rectangle bounds)
