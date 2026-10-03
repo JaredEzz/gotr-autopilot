@@ -19,6 +19,7 @@ GOTR Autopilot aims to make Guardians of the Rift as brain-off as possible, for 
 - **Always prefer** / **always avoid** altar lists, so e.g. Death and Blood are taken over Mind and Body.
 - Warns during downtime when a pouch is about to degrade, prompting an early Dark Mage repair, and
   outlines the "Can you repair my pouches?" dialogue option. The count resets when the Dark Mage confirms.
+- Shows the energy still needed for the XP minimum (300) until it is met, then hides it.
 
 ## Strategies
 

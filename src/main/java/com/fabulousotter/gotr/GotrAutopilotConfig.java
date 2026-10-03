@@ -417,4 +417,16 @@ public interface GotrAutopilotConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "showMinEnergy",
+		name = "XP minimum counter",
+		description = "Show the energy still needed for the Runecraft XP minimum (300) until it is reached",
+		section = displaySection,
+		position = 14
+	)
+	default boolean showMinEnergy()
+	{
+		return true;
+	}
 }

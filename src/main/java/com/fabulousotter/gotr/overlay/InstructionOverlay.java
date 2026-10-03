@@ -51,6 +51,8 @@ public class InstructionOverlay extends OverlayPanel
 	private static final Color INFO = new Color(200, 200, 200);
 	private static final Color NORMAL = new Color(120, 255, 200);
 	private static final Color HIGH = new Color(255, 120, 120);
+	// Runecraft XP (level x 45) needs at least this much energy earned in the game.
+	private static final int MIN_ENERGY = 300;
 
 	private final GotrAutopilotPlugin plugin;
 	private final GotrAutopilotConfig config;
@@ -169,6 +171,14 @@ public class InstructionOverlay extends OverlayPanel
 		{
 			smallLine(left, right, null);
 		}
+		if (s.getPhase() == GamePhase.ACTIVE && config.showMinEnergy())
+		{
+			int earned = s.getElementalEnergy() + s.getCatalyticEnergy();
+			if (earned < MIN_ENERGY)
+			{
+				smallLine("XP min", earned + " / " + MIN_ENERGY, HIGH);
+			}
+		}
 		if (s.isBindingNecklaceWorn())
 		{
 			smallLine("necklace", s.getNecklaceCharges() + " charges", s.getNecklaceCharges() <= 2 ? HIGH : null);
@@ -226,6 +236,14 @@ public class InstructionOverlay extends OverlayPanel
 		if (s.getSavedElementalPoints() >= 0 || s.getSavedCatalyticPoints() >= 0)
 		{
 			line("Points", "E " + Math.max(0, s.getSavedElementalPoints()) + " / C " + Math.max(0, s.getSavedCatalyticPoints()));
+		}
+		if (s.getPhase() == GamePhase.ACTIVE && config.showMinEnergy())
+		{
+			int earned = s.getElementalEnergy() + s.getCatalyticEnergy();
+			if (earned < MIN_ENERGY)
+			{
+				line("XP min", earned + " / " + MIN_ENERGY, HIGH);
+			}
 		}
 		if (s.getChargedCell() != null)
 		{
