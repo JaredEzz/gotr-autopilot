@@ -24,8 +24,12 @@
  */
 package com.fabulousotter.gotr;
 
+import com.fabulousotter.gotr.model.Altar;
+import com.fabulousotter.gotr.plan.BarrierPriority;
 import com.fabulousotter.gotr.plan.Strategy;
 import java.awt.Color;
+import java.util.EnumSet;
+import java.util.Set;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
@@ -184,6 +188,45 @@ public interface GotrAutopilotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "barrierPriority",
+		name = "Barrier target",
+		description = "Lowest health: tend the most damaged or upgradable barrier. Closest: tend the nearest "
+			+ "barrier that needs work (not Overcharged, or at 70% health or less), preferring the side the "
+			+ "next step heads to (west to deposit runes, east for cells or the remains); when nothing needs "
+			+ "work, recharge the closest healthy barrier",
+		section = strategySection,
+		position = 9
+	)
+	default BarrierPriority barrierPriority()
+	{
+		return BarrierPriority.LOWEST_HEALTH;
+	}
+
+	@ConfigItem(
+		keyName = "preferredAltars",
+		name = "Always prefer altars",
+		description = "Any of these altars is chosen over others whenever it is usable, whatever the cell tier or energy balance",
+		section = strategySection,
+		position = 10
+	)
+	default Set<Altar> preferredAltars()
+	{
+		return EnumSet.noneOf(Altar.class);
+	}
+
+	@ConfigItem(
+		keyName = "dispreferredAltars",
+		name = "Always avoid altars",
+		description = "Only chosen when nothing else is available",
+		section = strategySection,
+		position = 11
+	)
+	default Set<Altar> dispreferredAltars()
+	{
+		return EnumSet.noneOf(Altar.class);
+	}
+
+	@ConfigItem(
 		keyName = "notification",
 		name = "Notify on new step",
 		description = "Notification when the instruction changes",
@@ -318,5 +361,43 @@ public interface GotrAutopilotConfig extends Config
 	default boolean chatSteps()
 	{
 		return false;
+	}
+
+	@ConfigItem(
+		keyName = "comboAltarClickGuard",
+		name = "Combo altar click guard",
+		description = "While a combination rune is possible at an elemental altar, push Craft-rune off the "
+			+ "left-click (it stays available on right-click) so you never craft the plain rune by mistake",
+		section = displaySection,
+		position = 11
+	)
+	default boolean comboAltarClickGuard()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "magicImbuePrompt",
+		name = "Magic Imbue prompt",
+		description = "Highlight the magic book tab, or the Magic Imbue spell when the book is open, while a "
+			+ "combination rune is about to be crafted and the buff is not up",
+		section = displaySection,
+		position = 12
+	)
+	default boolean magicImbuePrompt()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "dropEssenceLeftClick",
+		name = "Drop essence on left click",
+		description = "While the plan says to drop an essence, make Drop the left-click option on it",
+		section = displaySection,
+		position = 13
+	)
+	default boolean dropEssenceLeftClick()
+	{
+		return true;
 	}
 }

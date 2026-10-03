@@ -24,51 +24,24 @@
  */
 package com.fabulousotter.gotr.plan;
 
-import com.fabulousotter.gotr.model.Altar;
-import com.google.common.collect.ImmutableSet;
-import java.util.Set;
-import lombok.Builder;
-import lombok.Value;
-
-@Value
-@Builder(toBuilder = true)
-public class PlannerSettings
+/**
+ * How a damaged barrier is picked when more than one needs attention.
+ */
+public enum BarrierPriority
 {
-	@Builder.Default
-	Strategy strategy = Strategy.GENERAL;
-	@Builder.Default
-	int openingFragmentTarget = 120;
-	@Builder.Default
-	int craftWindowSeconds = 50;
-	@Builder.Default
-	int minFragmentsToCraft = 30;
-	@Builder.Default
-	int desiredGuardians = 2;
-	@Builder.Default
-	boolean combinationRunes = false;
-	@Builder.Default
-	Altar baseRune = Altar.AIR;
-	@Builder.Default
-	boolean balanceWithSavedPoints = true;
-	@Builder.Default
-	int maxImbalance = 200;
-	@Builder.Default
-	Set<Altar> preferredAltars = ImmutableSet.of();
-	@Builder.Default
-	Set<Altar> dispreferredAltars = ImmutableSet.of();
-	@Builder.Default
-	boolean protectRightBarrier = true;
-	@Builder.Default
-	BarrierPriority barrierPriority = BarrierPriority.LOWEST_HEALTH;
-	@Builder.Default
-	int portalMinCapacity = 10;
-	@Builder.Default
-	int gracePortalSeconds = 95;
-	// How long to wait for a better altar when only a weak one is usable; 0 never waits. Every
-	// altar pays two energy per essence, so the wait only buys a better cell, and points come
-	// first: a weak altar is an altar.
-	@Builder.Default
-	int weakAltarWaitSeconds = 0;
-	@Builder.Default
-	int portalWarningSeconds = 10;
+	LOWEST_HEALTH("Lowest health"),
+	CLOSEST("Closest");
+
+	private final String label;
+
+	BarrierPriority(String label)
+	{
+		this.label = label;
+	}
+
+	@Override
+	public String toString()
+	{
+		return label;
+	}
 }

@@ -1118,12 +1118,12 @@ public class Planner
 			{
 				return Instruction.builder().step(Step.CELL_BARRIER_UPGRADE)
 					.headline("Strengthen the " + target.getTier().getLabel().toLowerCase() + " barrier")
-					.detail("")
+					.detail(barrierDetail(c, target))
 					.target(Target.CELL_TILE).location(target.getLocation()).items(cell).build();
 			}
 			return Instruction.builder().step(Step.CELL_BARRIER_RECHARGE)
 				.headline("Recharge the " + target.getTier().getLabel().toLowerCase() + " barrier")
-				.detail("")
+				.detail(barrierDetail(c, target))
 				.target(Target.CELL_TILE).location(target.getLocation()).items(cell).build();
 		}
 		if (slotFree && s.isChisel() && tier.isAtLeast(CellTier.STRONG))
@@ -1146,6 +1146,11 @@ public class Planner
 			return null;
 		}
 		BarrierState fresh = freshBarrierToTend(s, c, tier);
+		if (c.getBarrierPriority() == BarrierPriority.CLOSEST)
+		{
+			// Always the nearest barrier that needs work, so the pick follows the player.
+			return fresh;
+		}
 		// Keep the previous barrier unless a new target is below 60% health.
 		BarrierState kept = barrierAt(barriers, s.getChosenTile());
 		if (kept == null || kept == fresh)
@@ -1189,16 +1194,10 @@ public class Planner
 	private BarrierState freshBarrierToTend(Snapshot s, PlannerSettings c, CellTier tier)
 	{
 		List<BarrierState> barriers = s.getBarriers();
-		BarrierState protectedBarrier = null;
-		if (c.getStrategy() == Strategy.SOLO && c.isProtectRightBarrier() && barriers.size() > 1)
+		BarrierState protectedBarrier = protectedBarrier(c, barriers);
+		if (c.getBarrierPriority() == BarrierPriority.CLOSEST)
 		{
-			for (BarrierState barrier : barriers)
-			{
-				if (protectedBarrier == null || barrier.getLocation().getX() > protectedBarrier.getLocation().getX())
-				{
-					protectedBarrier = barrier;
-				}
-			}
+			return closestBarrierToTend(s, barriers, protectedBarrier, preferredSide(s, c));
 		}
 		BarrierState damaged = null;
 		BarrierState upgradable = null;
@@ -1251,6 +1250,157 @@ public class Planner
 			return spare;
 		}
 		return null;
+	}
+
+	// Solo: never recharge the right-most barrier so the explosion does less damage.
+	@Nullable
+	private static BarrierState protectedBarrier(PlannerSettings c, List<BarrierState> barriers)
+	{
+		if (c.getStrategy() != Strategy.SOLO || !c.isProtectRightBarrier() || barriers.size() <= 1)
+		{
+			return null;
+		}
+		BarrierState rightmost = null;
+		for (BarrierState barrier : barriers)
+		{
+			if (rightmost == null || barrier.getLocation().getX() > rightmost.getLocation().getX())
+			{
+				rightmost = barrier;
+			}
+		}
+		return rightmost;
+	}
+
+	/**
+	 * Closest-first targeting: a barrier that is not Overcharged, or is at 70% health or less,
+	 * needs work. Among those the nearest is taken, but a barrier on the side the plan heads to
+	 * next (west for a deposit, east for cells or the remains) is preferred so the route does not
+	 * cross the temple. When nothing needs work, the nearest barrier is taken anyway, likewise
+	 * side-biased, to spend the cell.
+	 */
+	@Nullable
+	private static BarrierState closestBarrierToTend(Snapshot s, List<BarrierState> barriers,
+		@Nullable BarrierState protectedBarrier, Side side)
+	{
+		WorldPoint me = s.getPlayerLocation();
+		double centreX = barrierCentreX(barriers);
+		BarrierState sideNeedy = null;
+		BarrierState needy = null;
+		BarrierState sideAny = null;
+		BarrierState any = null;
+		int sideNeedyGap = Integer.MAX_VALUE;
+		int needyGap = Integer.MAX_VALUE;
+		int sideAnyGap = Integer.MAX_VALUE;
+		int anyGap = Integer.MAX_VALUE;
+		for (BarrierState barrier : barriers)
+		{
+			if (barrier == protectedBarrier)
+			{
+				continue;
+			}
+			int gap = me == null ? 0 : barrier.getLocation().distanceTo2D(me);
+			boolean onSide = onSide(barrier, side, centreX);
+			if (any == null || gap < anyGap)
+			{
+				any = barrier;
+				anyGap = gap;
+			}
+			if (onSide && (sideAny == null || gap < sideAnyGap))
+			{
+				sideAny = barrier;
+				sideAnyGap = gap;
+			}
+			if (needsWork(barrier))
+			{
+				if (needy == null || gap < needyGap)
+				{
+					needy = barrier;
+					needyGap = gap;
+				}
+				if (onSide && (sideNeedy == null || gap < sideNeedyGap))
+				{
+					sideNeedy = barrier;
+					sideNeedyGap = gap;
+				}
+			}
+		}
+		if (sideNeedy != null)
+		{
+			return sideNeedy;
+		}
+		if (needy != null)
+		{
+			return needy;
+		}
+		return sideAny != null ? sideAny : any;
+	}
+
+	// The side the next instruction after spending the cell targets, or NONE when it does not
+	// clearly favour a side. Uses the plan the cell's absence would produce, so it tracks the
+	// real route rather than a fixed rule.
+	private Side preferredSide(Snapshot s, PlannerSettings c)
+	{
+		Instruction next = afterStones(s.toBuilder().chargedCell(null).build(), c);
+		switch (next.getTarget())
+		{
+			case DEPOSIT_POOL:
+				return Side.WEST;
+			case UNCHARGED_CELL_TABLE:
+			case WEAK_CELL_TABLE:
+			case LARGE_REMAINS:
+			case GUARDIAN_REMAINS:
+			case GUARDIAN_REMAINS_ENTRANCE:
+			case HUGE_REMAINS:
+				return Side.EAST;
+			default:
+				return Side.NONE;
+		}
+	}
+
+	// West/east of the ring of barriers, whose average x is the guardian's.
+	private static double barrierCentreX(List<BarrierState> barriers)
+	{
+		double sum = 0;
+		for (BarrierState barrier : barriers)
+		{
+			sum += barrier.getLocation().getX();
+		}
+		return barriers.isEmpty() ? 0 : sum / barriers.size();
+	}
+
+	private static boolean onSide(BarrierState barrier, Side side, double centreX)
+	{
+		if (side == Side.NONE)
+		{
+			return false;
+		}
+		double x = barrier.getLocation().getX();
+		return side == Side.WEST ? x < centreX : x > centreX;
+	}
+
+	private enum Side
+	{
+		NONE, WEST, EAST
+	}
+
+	private static boolean needsWork(BarrierState barrier)
+	{
+		if (barrier.getTier().getRank() < CellTier.OVERCHARGED.getRank())
+		{
+			return true;
+		}
+		int hp = barrier.getHealthPercent();
+		return hp >= 0 && hp <= 70;
+	}
+
+	// Which case the closest-first pick fell into, spelled out under the instruction.
+	private static String barrierDetail(PlannerSettings c, BarrierState target)
+	{
+		if (c.getBarrierPriority() != BarrierPriority.CLOSEST)
+		{
+			return "";
+		}
+		return needsWork(target) ? "nearest low-health barrier" : "closest healthy barrier";
 	}
 
 	private static Alignment shortAlignment(Snapshot s, PlannerSettings c)

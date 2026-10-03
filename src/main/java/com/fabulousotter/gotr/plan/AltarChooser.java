@@ -34,10 +34,27 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-class AltarChooser
+public class AltarChooser
 {
+	// Big enough to dominate the energy and travel terms, so a preferred altar always wins.
+	private static final int PREFERENCE_WEIGHT = 1000;
+
 	private AltarChooser()
 	{
+	}
+
+	// +1 for an always-prefer altar, -1 for an always-avoid altar, 0 otherwise.
+	static int preference(PlannerSettings c, Altar altar)
+	{
+		if (c.getPreferredAltars().contains(altar))
+		{
+			return 1;
+		}
+		if (c.getDispreferredAltars().contains(altar))
+		{
+			return -1;
+		}
+		return 0;
 	}
 
 	@Nullable
@@ -71,7 +88,9 @@ class AltarChooser
 			CombinationRune combo = combinationAt(altar, s, c);
 			int perEssence = combo != null ? 3 : 2;
 			AltarChoice choice = new AltarChoice(altar, combo, viaTalisman, perEssence, "");
-			double score = c.getStrategy() == Strategy.MASS ? massScore(choice, s, c, essence) : 0;
+			double score = c.getStrategy() == Strategy.MASS
+				? massScore(choice, s, c, essence) + PREFERENCE_WEIGHT * preference(c, altar)
+				: 0;
 			boolean win = best == null || (c.getStrategy() == Strategy.MASS
 				? score > bestScore
 				: better(choice, best, s, c, essence));
@@ -109,7 +128,7 @@ class AltarChooser
 	}
 
 	@Nullable
-	static CombinationRune combinationAt(Altar altar, Snapshot s, PlannerSettings c)
+	public static CombinationRune combinationAt(Altar altar, Snapshot s, PlannerSettings c)
 	{
 		if (!c.isCombinationRunes() || altar.getAlignment() != Alignment.ELEMENTAL || s.getBaseRune() == null)
 		{
@@ -133,6 +152,12 @@ class AltarChooser
 
 	private static boolean better(AltarChoice a, AltarChoice b, Snapshot s, PlannerSettings c, int essence)
 	{
+		int prefA = preference(c, a.getAltar());
+		int prefB = preference(c, b.getAltar());
+		if (prefA != prefB)
+		{
+			return prefA > prefB;
+		}
 		int tierA = effectiveTier(a);
 		int tierB = effectiveTier(b);
 		boolean aStrong = tierA >= CellTier.STRONG.getRank() && imbalanceAfter(a, s, c, essence) <= c.getMaxImbalance();
