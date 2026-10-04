@@ -14,8 +14,9 @@ GOTR Autopilot aims to make Guardians of the Rift as brain-off as possible, for 
 - Pushes Craft-rune off the left-click of an elemental altar whenever a combination rune is possible
   (it stays on right-click), so a misclick cannot craft the plain rune.
 - Prompts the spell a step needs — Magic Imbue for a combination rune, or NPC Contact for a pouch
-  repair — by outlining the magic book tab, or the spell itself once the book is open. After imbuing,
-  it points back at the inventory tab so the base runes can be used on the altar.
+  repair (outlining the Dark Mage entry in the contact list) — by highlighting the magic book tab, or
+  the spell itself once the book is open. After imbuing, it points back at the inventory tab so the
+  base runes can be used on the altar.
 - While the plan says to drop an essence, makes **Drop** its left-click option.
 - **Always prefer** / **always avoid** altar lists, so e.g. Death and Blood are taken over Mind and Body.
 - Warns during downtime when a pouch is about to degrade, prompting an early Dark Mage repair, and

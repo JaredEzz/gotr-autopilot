@@ -42,6 +42,7 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.util.Text;
 
 /**
  * Points at the spell a step needs: NPC Contact while a pouch repair is due, or Magic Imbue while a
@@ -76,6 +77,12 @@ public class MagicImbueOverlay extends Overlay
 		if (config.pouchRepairLoads() > 0 && step == Step.PRE_REPAIR_POUCHES
 			&& s.isLunarSpellbook() && s.isRunePouch())
 		{
+			Widget darkMage = scanForText(client.getWidget(InterfaceID.LunarContactNpc.UNIVERSE), "dark mage", 6);
+			if (darkMage != null)
+			{
+				outline(graphics, darkMage.getBounds());
+				return null;
+			}
 			highlightSpell(graphics, InterfaceID.MagicSpellbook.NPC_CONTACT);
 			return null;
 		}
@@ -147,5 +154,36 @@ public class MagicImbueOverlay extends Overlay
 		graphics.setColor(config.highlightColor());
 		graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
 		graphics.setStroke(old);
+	}
+
+	// The first widget (to a bounded depth) whose text contains the needle.
+	@Nullable
+	private static Widget scanForText(@Nullable Widget widget, String needle, int depth)
+	{
+		if (widget == null || depth < 0 || widget.isHidden())
+		{
+			return null;
+		}
+		String text = widget.getText();
+		if (text != null && Text.removeTags(text).toLowerCase().contains(needle))
+		{
+			return widget;
+		}
+		for (Widget[] group : new Widget[][]{widget.getChildren(), widget.getDynamicChildren()})
+		{
+			if (group == null)
+			{
+				continue;
+			}
+			for (Widget child : group)
+			{
+				Widget found = scanForText(child, needle, depth - 1);
+				if (found != null)
+				{
+					return found;
+				}
+			}
+		}
+		return null;
 	}
 }
