@@ -66,6 +66,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
+import net.runelite.api.events.PostMenuSort;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemContainer;
@@ -386,16 +387,32 @@ public class GotrAutopilotPlugin extends Plugin
 	}
 
 	// While dropping an essence is the step, make Drop the item's default left-click option. The
-	// top of the menu is the last entry, so the Drop entry is moved there.
+	// top of the menu is the last entry, so the Drop entry is moved there. The left-click option is
+	// picked each time the hover menu is sorted, so that is where the move has to happen; the menu
+	// opened on a right-click is fixed by then and is handled when it opens.
+	@Subscribe
+	public void onPostMenuSort(PostMenuSort event)
+	{
+		if (!client.isMenuOpen())
+		{
+			moveDropToTop();
+		}
+	}
+
 	@Subscribe
 	public void onMenuOpened(MenuOpened event)
+	{
+		moveDropToTop();
+	}
+
+	private void moveDropToTop()
 	{
 		if (!config.dropEssenceLeftClick() || instruction.getStep() != Step.DROP_ESSENCE)
 		{
 			return;
 		}
 		Set<Integer> items = instruction.getItems();
-		MenuEntry[] entries = event.getMenuEntries();
+		MenuEntry[] entries = client.getMenuEntries();
 		for (int i = 0; i < entries.length - 1; i++)
 		{
 			MenuEntry entry = entries[i];
