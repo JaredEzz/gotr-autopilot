@@ -42,6 +42,7 @@ import com.fabulousotter.gotr.plan.Urgency;
 import com.fabulousotter.gotr.state.GamePhase;
 import com.fabulousotter.gotr.state.Location;
 import com.fabulousotter.gotr.state.Snapshot;
+import com.fabulousotter.gotr.state.GotrWorlds;
 import com.fabulousotter.gotr.state.StateTracker;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
@@ -176,6 +177,10 @@ public class GotrAutopilotPlugin extends Plugin
 	private StateTracker tracker;
 
 	@Inject
+	@Getter
+	private GotrWorlds gotrWorlds;
+
+	@Inject
 	private InstructionOverlay instructionOverlay;
 
 	@Inject
@@ -303,6 +308,10 @@ public class GotrAutopilotPlugin extends Plugin
 			clearInstruction();
 			pathfinder.clear();
 			return;
+		}
+		if (s.getLocation() == Location.LOBBY && config.lobbyWorldInfo())
+		{
+			gotrWorlds.refreshIfStale();
 		}
 		boolean shortcutsAvailable = s.getAgilityLevel() >= SHORTCUT_AGILITY_LEVEL;
 		if (sceneVersion != tracker.getSceneVersion() || canUseShortcuts != shortcutsAvailable)

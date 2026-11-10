@@ -31,6 +31,7 @@ import com.fabulousotter.gotr.plan.Step;
 import com.fabulousotter.gotr.plan.Target;
 import com.fabulousotter.gotr.plan.Urgency;
 import com.fabulousotter.gotr.state.GamePhase;
+import com.fabulousotter.gotr.state.GotrWorlds;
 import com.fabulousotter.gotr.state.Location;
 import com.fabulousotter.gotr.state.Snapshot;
 import java.awt.BasicStroke;
@@ -39,6 +40,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Stroke;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -75,6 +77,7 @@ public class SceneOverlay extends Overlay
 	private static final int PATH_RESYNC_TILES = 2;
 	private static final int TILE_LABEL_HEIGHT = 40;
 	private static final int OBJECT_LABEL_HEIGHT = 120;
+	private static final int LOBBY_INFO_HEIGHT = 220;
 	// Height above a portal guardian for its rune sprite, clear of the model.
 	private static final int RUNE_ICON_HEIGHT = 260;
 
@@ -110,6 +113,7 @@ public class SceneOverlay extends Overlay
 		}
 		TileObject countdownAt = drawStartCountdown(graphics, instruction);
 		drawSafeToLeave(graphics);
+		drawLobbyWorldInfo(graphics);
 		drawActiveAltarRunes(graphics);
 		if (instruction.getTarget() == Target.NONE)
 		{
@@ -216,6 +220,81 @@ public class SceneOverlay extends Overlay
 		if (barrier != null)
 		{
 			label(graphics, barrier.getLocalLocation(), "Safe to exit", config.highlightColor(), OBJECT_LABEL_HEIGHT);
+		}
+	}
+
+	// Over the entrance barrier from the lobby: whether this world has a game on, and the
+	// Guardians of the Rift worlds worth hopping to.
+	private void drawLobbyWorldInfo(Graphics2D graphics)
+	{
+		Snapshot s = plugin.getSnapshot();
+		if (!config.lobbyWorldInfo() || s.getLocation() != Location.LOBBY)
+		{
+			return;
+		}
+		GameObject barrier = plugin.getTracker().getEntranceBarrier();
+		if (barrier == null)
+		{
+			return;
+		}
+		GotrWorlds worlds = plugin.getGotrWorlds();
+		int here = client.getWorld();
+		List<String> lines = new ArrayList<>();
+		lines.add(gameStatus(s));
+		GotrWorlds.Entry ping = worlds.lowestPing();
+		GotrWorlds.Entry busy = worlds.mostPlayers();
+		if (ping == null && busy == null)
+		{
+			lines.add("Checking GOTR worlds...");
+		}
+		else
+		{
+			if (!worlds.isGotrWorld(here))
+			{
+				lines.add("W" + here + " is not a GOTR world");
+			}
+			if (ping != null)
+			{
+				lines.add("Lowest ping: W" + ping.getId() + " (" + ping.getPing() + " ms)" + (ping.getId() == here ? " - here" : ""));
+			}
+			if (busy != null)
+			{
+				lines.add("Most players: W" + busy.getId() + " (" + busy.getPlayers() + ")" + (busy.getId() == here ? " - here" : ""));
+			}
+		}
+		// The block grows upwards from its last line, clear of the start countdown below it.
+		String last = lines.get(lines.size() - 1);
+		Point bottom = Perspective.getCanvasTextLocation(client, graphics, barrier.getLocalLocation(), last, LOBBY_INFO_HEIGHT);
+		if (bottom == null)
+		{
+			return;
+		}
+		int lineHeight = graphics.getFontMetrics().getHeight();
+		int centreX = bottom.getX() + graphics.getFontMetrics().stringWidth(last) / 2;
+		for (int i = 0; i < lines.size(); i++)
+		{
+			String line = lines.get(i);
+			int y = bottom.getY() - (lines.size() - 1 - i) * lineHeight;
+			Point p = new Point(centreX - graphics.getFontMetrics().stringWidth(line) / 2, y);
+			OverlayUtil.renderTextLocation(graphics, p, line, i == 0 ? config.highlightColor() : Color.WHITE);
+		}
+	}
+
+	private static String gameStatus(Snapshot s)
+	{
+		int next = s.getSecondsToNextGame();
+		String when = next >= 0 ? String.format(" - next in ~%d:%02d", next / 60, next % 60) : "";
+		switch (s.getPhase())
+		{
+			case ACTIVE:
+			case CLOSING:
+				return "Game in progress" + when;
+			case COUNTDOWN:
+				return s.getSecondsToStart() >= 0 ? "Game starting in " + s.getSecondsToStart() + "s" : "Game starting soon";
+			case ENDED:
+				return "No game in progress" + when;
+			default:
+				return next >= 0 ? "No game in progress" + when : "No game seen yet on this world";
 		}
 	}
 
