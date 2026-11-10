@@ -1465,6 +1465,7 @@ public class StateTracker
 			.anyPortalThisGame(anyPortalThisGame)
 			.altarVisitedThisGame(altarVisitedThisGame)
 			.guardiansActive(hudGuardians)
+			.riftActiveSeen(guardiansObserved ? (observedElemental != null || observedCatalytic != null) : null)
 			.guardiansMax(hudGuardiansMax > 0 ? hudGuardiansMax : 10)
 			.fragments(fragments)
 			.essence(essence)

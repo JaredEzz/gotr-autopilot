@@ -284,6 +284,12 @@ public class SceneOverlay extends Overlay
 	{
 		int next = s.getSecondsToNextGame();
 		String when = next >= 0 ? String.format(" - next in ~%d:%02d", next / 60, next % 60) : "";
+		// Just after a hop the phase is unknown until the HUD or chat says, but the portal
+		// guardian statues in the temple show an open rift from the lobby.
+		if (s.getPhase() == GamePhase.WAITING && next < 0 && s.getRiftActiveSeen() != null)
+		{
+			return s.getRiftActiveSeen() ? "Game in progress" : "No game in progress";
+		}
 		switch (s.getPhase())
 		{
 			case ACTIVE:

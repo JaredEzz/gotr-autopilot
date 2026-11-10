@@ -64,6 +64,12 @@ public class Snapshot
 	int secondsSinceStart = -1;
 	@Builder.Default
 	int secondsToNextGame = -1;
+	/**
+	 * Whether the portal guardian statues in view show a running rift, read from their
+	 * animation so it works from the lobby too: null when no statue is in view.
+	 */
+	@Nullable
+	Boolean riftActiveSeen;
 	int elementalEnergy;
 	int catalyticEnergy;
 	int power;
