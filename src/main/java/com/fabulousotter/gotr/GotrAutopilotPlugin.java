@@ -70,6 +70,7 @@ import net.runelite.api.events.PostMenuSort;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ObjectID;
@@ -419,6 +420,12 @@ public class GotrAutopilotPlugin extends Plugin
 			if (!"Drop".equals(entry.getOption()) || !isEssenceEntry(entry, items))
 			{
 				continue;
+			}
+			// Drop is a low-priority item op, which the client only offers on right-click, however high it
+			// sits in the menu. Raise it to a normal op so it can be the left-click.
+			if (entry.getType() == MenuAction.CC_OP_LOW_PRIORITY)
+			{
+				entry.setType(MenuAction.CC_OP);
 			}
 			System.arraycopy(entries, i + 1, entries, i, entries.length - i - 1);
 			entries[entries.length - 1] = entry;
