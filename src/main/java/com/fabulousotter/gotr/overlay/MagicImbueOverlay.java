@@ -74,7 +74,7 @@ public class MagicImbueOverlay extends Overlay
 		Snapshot s = plugin.getSnapshot();
 		Step step = plugin.getInstruction().getStep();
 
-		if (config.pouchRepairLoads() > 0 && step == Step.PRE_REPAIR_POUCHES
+		if (step == Step.PRE_REPAIR_POUCHES
 			&& s.isLunarSpellbook() && s.isRunePouch())
 		{
 			Widget darkMage = scanForText(client.getWidget(InterfaceID.LunarContactNpc.UNIVERSE), "dark mage", 6);
