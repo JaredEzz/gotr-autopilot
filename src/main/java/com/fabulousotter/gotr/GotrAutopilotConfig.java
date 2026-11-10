@@ -425,6 +425,19 @@ public interface GotrAutopilotConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "hidePowerUpWithoutStones",
+		name = "Hide Power-up without stones",
+		description = "Remove the Great Guardian's Power-up option while you carry no elemental,<br>"
+			+ "catalytic or poly guardian stones, so a click there does nothing by mistake",
+		section = displaySection,
+		position = 9
+	)
+	default boolean hidePowerUpWithoutStones()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "chatSteps",
 		name = "Steps in chat",
 		description = "Also print each new step as a game message",

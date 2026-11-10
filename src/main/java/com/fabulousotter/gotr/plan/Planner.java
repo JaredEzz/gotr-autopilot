@@ -140,7 +140,7 @@ public class Planner
 			// Through the grace portal: fill up for the next round, then wait where you are.
 			return inHugeRemains(s, true);
 		}
-		if (s.isPortalOpen())
+		if (s.isPortalOpen() && portalReachable(s))
 		{
 			// A portal between rounds: only what fits before it closes, then wait inside.
 			Instruction prep = graceResupply(s);
@@ -251,7 +251,7 @@ public class Planner
 	private Instruction ended(Snapshot s, PlannerSettings c)
 	{
 		// With a portal open the stones wait their turn among the errands that fit before it closes.
-		if (s.hasStones() && s.getLocation() == Location.TEMPLE && !s.isPortalOpen())
+		if (s.hasStones() && s.getLocation() == Location.TEMPLE && !(s.isPortalOpen() && portalReachable(s)))
 		{
 			return Instruction.builder().step(Step.POWER_UP).headline("Hand in your stones now")
 				.detail("The rift is closing").target(Target.GREAT_GUARDIAN).items(STONE_ITEMS).urgency(Urgency.HIGH).build();
@@ -271,8 +271,9 @@ public class Planner
 		}
 
 		// Run grace-portal preparation before the portal instruction while there is time. The
-		// portal comes before a broken tile: it is open for 26 s, the tile keeps.
-		if (s.isPortalOpen())
+		// portal comes before a broken tile: it is open for 26 s, the tile keeps. A portal that
+		// closes before you could reach it is ignored, so the plan goes on as if it were shut.
+		if (s.isPortalOpen() && portalReachable(s))
 		{
 			int close = s.getSecondsToClose();
 			int left = s.getPortalSecondsRemaining();
@@ -353,6 +354,16 @@ public class Planner
 			|| last == Step.PRE_REPAIR_POUCHES;
 		int slack = wasGrace ? 5 : last == Step.ENTER_PORTAL ? -5 : 0;
 		return s.energyCapped() || (close >= 0 && close <= (left >= 0 ? left : 30) + GRACE_MARGIN_SECONDS + slack);
+	}
+
+	/**
+	 * Whether the open portal can still be reached before it closes. With its time or the
+	 * walk unknown it is taken as reachable.
+	 */
+	private static boolean portalReachable(Snapshot s)
+	{
+		int left = s.getPortalSecondsRemaining();
+		return left < 0 || walkSeconds(s, Target.PORTAL, 0) + 1 <= left;
 	}
 
 	@Nullable

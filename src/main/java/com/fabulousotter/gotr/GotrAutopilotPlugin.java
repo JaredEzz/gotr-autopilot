@@ -69,10 +69,12 @@ import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.PostMenuSort;
 import net.runelite.api.GameObject;
 import net.runelite.api.GameState;
+import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.ObjectID;
 import net.runelite.api.GroundObject;
 import net.runelite.api.NPC;
@@ -122,6 +124,12 @@ public class GotrAutopilotPlugin extends Plugin
 	private static final Set<Integer> TOP_PIECES = ImmutableSet.of(
 		ObjectID.GOTR_AGILITY_SHORTCUT_TOP,
 		ObjectID.GOTR_AGILITY_SHORTCUT_TOP_NOOP
+	);
+	private static final Set<Integer> STONE_ITEMS = ImmutableSet.of(
+		ItemID.GOTR_GUARDIAN_STONE_ELEMENTAL,
+		ItemID.GOTR_GUARDIAN_STONE_CATALYTIC,
+		ItemID.GOTR_GUARDIAN_STONE_POLYELEMENTAL,
+		ItemID.GOTR_GUARDIAN_STONE_POLYCATALYTIC
 	);
 	// Tiles read off the temple itself (it is not instanced): where the player stands at each
 	// end of the rubble shortcut and where the large guardian remains are mined from.
@@ -364,6 +372,11 @@ public class GotrAutopilotPlugin extends Plugin
 	@Subscribe
 	public void onMenuEntryAdded(MenuEntryAdded event)
 	{
+		if (config.hidePowerUpWithoutStones() && isPowerUpEntry(event.getMenuEntry()) && !carryingStones())
+		{
+			client.getMenu().removeMenuEntry(event.getMenuEntry());
+			return;
+		}
 		if (!config.comboAltarClickGuard())
 		{
 			return;
@@ -378,6 +391,31 @@ public class GotrAutopilotPlugin extends Plugin
 		{
 			event.getMenuEntry().setDeprioritized(true);
 		}
+	}
+
+	private boolean isPowerUpEntry(MenuEntry entry)
+	{
+		NPC npc = entry.getNpc();
+		return npc != null && npc == tracker.getGreatGuardian()
+			&& entry.getOption() != null && entry.getOption().startsWith("Power");
+	}
+
+	// Read from the inventory rather than the snapshot, which is a tick behind a hand-in.
+	private boolean carryingStones()
+	{
+		ItemContainer inventory = client.getItemContainer(InventoryID.INV);
+		if (inventory == null)
+		{
+			return false;
+		}
+		for (Item item : inventory.getItems())
+		{
+			if (STONE_ITEMS.contains(item.getId()))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// True when using the base rune on this altar would make a combination rune right now.
