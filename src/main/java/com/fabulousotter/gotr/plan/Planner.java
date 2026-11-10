@@ -994,10 +994,14 @@ public class Planner
 		AltarChoice choice = AltarChooser.choose(s, c);
 		if (choice == null)
 		{
-			String why = s.getActiveElemental() == null && s.getActiveCatalytic() == null
-				? "No altar is open yet" : "You cannot use either open altar";
+			boolean anyOpen = s.getActiveElemental() != null || s.getActiveCatalytic() != null;
+			boolean tooFar = anyOpen && s.getAltarSecondsRemaining() >= 0
+				&& (s.getActiveElemental() != null && !AltarChooser.reachableBeforeChange(s.getActiveElemental(), s)
+				|| s.getActiveCatalytic() != null && !AltarChooser.reachableBeforeChange(s.getActiveCatalytic(), s));
+			String why = !anyOpen ? "No altar is open yet"
+				: tooFar ? "The altars change in " + s.getAltarSecondsRemaining() + "s" : "You cannot use either open altar";
 			return Instruction.builder().step(Step.WAIT_FOR_ALTAR).headline(why)
-				.detail("Wait in the centre")
+				.detail(tooFar ? "Too far to make it - wait in the centre" : "Wait in the centre")
 				.target(Target.CENTRE_WAIT).urgency(Urgency.INFO).build();
 		}
 		boolean weak = choice.getAltar().getCellTier() == CellTier.WEAK && choice.getCombination() == null;

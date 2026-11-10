@@ -85,6 +85,11 @@ public class AltarChooser
 				continue;
 			}
 			boolean viaTalisman = altar != s.getActiveElemental() && altar != s.getActiveCatalytic();
+			// An open altar you cannot reach before the altars change is no choice at all.
+			if (!viaTalisman && !reachableBeforeChange(altar, s))
+			{
+				continue;
+			}
 			CombinationRune combo = combinationAt(altar, s, c);
 			int perEssence = combo != null ? 3 : 2;
 			AltarChoice choice = new AltarChoice(altar, combo, viaTalisman, perEssence, "");
@@ -106,6 +111,21 @@ public class AltarChooser
 		}
 		return new AltarChoice(best.getAltar(), best.getCombination(), best.isViaTalisman(), best.getEnergyPerEssence(),
 			reason(best, essence));
+	}
+
+	/**
+	 * Whether the walk to an altar's portal guardian ends before the altars change. With the
+	 * change time or the walk unknown it is taken as reachable.
+	 */
+	static boolean reachableBeforeChange(Altar altar, Snapshot s)
+	{
+		int change = s.getAltarSecondsRemaining();
+		Integer ticks = s.getGuardianTravelTicks().get(altar);
+		if (change < 0 || ticks == null)
+		{
+			return true;
+		}
+		return (int) Math.round(ticks / 2.0 * 0.6) + 1 <= change;
 	}
 
 	// Why an open altar cannot be used by this player, or null when it can.
