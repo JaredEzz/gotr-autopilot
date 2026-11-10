@@ -11,6 +11,7 @@ GOTR Autopilot aims to make Guardians of the Rift as brain-off as possible, for 
 - A hint arrow and an optional notification when the step changes after a longer AFK stint.
 - Tells you when it's safe to exit after a game to avoid losing points.
 - Hides The Great Guardian when a cell is to be placed on a tile to avoid mis-clicks.
+- Removes the Great Guardian's **Power-up** option while you carry no guardian stones.
 - Pushes Craft-rune off the left-click of an elemental altar whenever a combination rune is possible
   (it stays on right-click), so a misclick cannot craft the plain rune.
 - Prompts the spell a step needs — Magic Imbue for a combination rune, or NPC Contact for a pouch
@@ -22,6 +23,10 @@ GOTR Autopilot aims to make Guardians of the Rift as brain-off as possible, for 
 - Outlines the "Can you repair my pouches?" Dark Mage dialogue option, so
   the repair needs no hunting through the contact menu.
 - Shows the energy still needed for the XP minimum (300) until it is met, then hides it.
+- Skips a portal or an open altar you can't reach before it closes or the altars change, and gives
+  the next step instead.
+- Over the entrance barrier in the lobby: whether a game is in progress on this world, and the
+  Guardians of the Rift worlds with the lowest ping and the most players.
 
 ## Strategies
 
