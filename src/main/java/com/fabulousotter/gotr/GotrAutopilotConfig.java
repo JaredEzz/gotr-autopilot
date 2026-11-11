@@ -501,14 +501,26 @@ public interface GotrAutopilotConfig extends Config
 
 	@ConfigItem(
 		keyName = "lobbyWorldInfo",
-		name = "World info at the barrier",
-		description = "In the lobby, show above the entrance barrier whether a game is in progress on<br>"
-			+ "this world and the Guardians of the Rift worlds with the lowest ping and the most players",
+		name = "Game status at the barrier",
+		description = "In the lobby, show above the entrance barrier whether a game is in progress on this world",
 		section = displaySection,
 		position = 15
 	)
 	default boolean lobbyWorldInfo()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "lobbyWorldSuggestions",
+		name = "Suggest worlds at the barrier",
+		description = "Also show the Guardians of the Rift worlds with the lowest ping and the most players.<br>"
+			+ "Pings each Guardians of the Rift world every 90 seconds while you are in the lobby",
+		section = displaySection,
+		position = 16
+	)
+	default boolean lobbyWorldSuggestions()
+	{
+		return false;
 	}
 }

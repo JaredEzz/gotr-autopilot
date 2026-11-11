@@ -223,7 +223,7 @@ public class SceneOverlay extends Overlay
 		}
 	}
 
-	// Over the entrance barrier from the lobby: whether this world has a game on, and the
+	// Over the entrance barrier from the lobby: whether this world has a game on, and optionally the
 	// Guardians of the Rift worlds worth hopping to.
 	private void drawLobbyWorldInfo(Graphics2D graphics)
 	{
@@ -237,10 +237,33 @@ public class SceneOverlay extends Overlay
 		{
 			return;
 		}
-		GotrWorlds worlds = plugin.getGotrWorlds();
-		int here = client.getWorld();
 		List<String> lines = new ArrayList<>();
 		lines.add(gameStatus(s));
+		if (config.lobbyWorldSuggestions())
+		{
+			addWorldSuggestions(lines, client.getWorld());
+		}
+		// The block grows upwards from its last line, clear of the start countdown below it.
+		String last = lines.get(lines.size() - 1);
+		Point bottom = Perspective.getCanvasTextLocation(client, graphics, barrier.getLocalLocation(), last, LOBBY_INFO_HEIGHT);
+		if (bottom == null)
+		{
+			return;
+		}
+		int lineHeight = graphics.getFontMetrics().getHeight();
+		int centreX = bottom.getX() + graphics.getFontMetrics().stringWidth(last) / 2;
+		for (int i = 0; i < lines.size(); i++)
+		{
+			String line = lines.get(i);
+			int y = bottom.getY() - (lines.size() - 1 - i) * lineHeight;
+			Point p = new Point(centreX - graphics.getFontMetrics().stringWidth(line) / 2, y);
+			OverlayUtil.renderTextLocation(graphics, p, line, i == 0 ? config.highlightColor() : Color.WHITE);
+		}
+	}
+
+	private void addWorldSuggestions(List<String> lines, int here)
+	{
+		GotrWorlds worlds = plugin.getGotrWorlds();
 		GotrWorlds.Entry ping = worlds.lowestPing();
 		GotrWorlds.Entry busy = worlds.mostPlayers();
 		if (ping == null && busy == null)
@@ -261,22 +284,6 @@ public class SceneOverlay extends Overlay
 			{
 				lines.add("Most players: W" + busy.getId() + " (" + busy.getPlayers() + ")" + (busy.getId() == here ? " - here" : ""));
 			}
-		}
-		// The block grows upwards from its last line, clear of the start countdown below it.
-		String last = lines.get(lines.size() - 1);
-		Point bottom = Perspective.getCanvasTextLocation(client, graphics, barrier.getLocalLocation(), last, LOBBY_INFO_HEIGHT);
-		if (bottom == null)
-		{
-			return;
-		}
-		int lineHeight = graphics.getFontMetrics().getHeight();
-		int centreX = bottom.getX() + graphics.getFontMetrics().stringWidth(last) / 2;
-		for (int i = 0; i < lines.size(); i++)
-		{
-			String line = lines.get(i);
-			int y = bottom.getY() - (lines.size() - 1 - i) * lineHeight;
-			Point p = new Point(centreX - graphics.getFontMetrics().stringWidth(line) / 2, y);
-			OverlayUtil.renderTextLocation(graphics, p, line, i == 0 ? config.highlightColor() : Color.WHITE);
 		}
 	}
 

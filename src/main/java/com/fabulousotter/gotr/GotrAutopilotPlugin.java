@@ -309,7 +309,7 @@ public class GotrAutopilotPlugin extends Plugin
 			pathfinder.clear();
 			return;
 		}
-		if (s.getLocation() == Location.LOBBY && config.lobbyWorldInfo())
+		if (s.getLocation() == Location.LOBBY && config.lobbyWorldInfo() && config.lobbyWorldSuggestions())
 		{
 			gotrWorlds.refreshIfStale();
 		}

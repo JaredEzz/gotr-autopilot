@@ -25,8 +25,8 @@ GOTR Autopilot aims to make Guardians of the Rift as brain-off as possible, for 
 - Shows the energy still needed for the XP minimum (300) until it is met, then hides it.
 - Skips a portal or an open altar you can't reach before it closes or the altars change, and gives
   the next step instead.
-- Over the entrance barrier in the lobby: whether a game is in progress on this world, and the
-  Guardians of the Rift worlds with the lowest ping and the most players.
+- Over the entrance barrier in the lobby: whether a game is in progress on this world. Optionally
+  (off by default) also the Guardians of the Rift worlds with the lowest ping and the most players.
 
 ## Strategies
 
